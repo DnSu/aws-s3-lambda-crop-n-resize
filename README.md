@@ -1,6 +1,6 @@
 ## aws-s3-lambda-crop-n-resize
 
-### Installation
+### Dependencies
 ```bash
 $ npm install async gm
 ```
@@ -36,7 +36,15 @@ Sample config.json
 ### Deploy
 1. zip content of the folder
 2. upload as lambda function
-3. maker sure both dstBucket exists
+	* Lambda Config
+		* Runtime: Node.js 4.3
+		* Handler: index.handler
+		* Memory: 1024MB
+		* Timeout: 3 min
+3. maker sure dstBucket exists
 
 ### Notes
 * Large files (3+ MB) might cause problems. Try allocating more memory in Lambda.
+* Start with 1024mb of ram and 2 minutes timeout, and read log to adjust
+* Code based on [AWS tutorial](http://docs.aws.amazon.com/lambda/latest/dg/with-s3-example-deployment-pkg.html)
+* Only handles jpg and png

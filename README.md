@@ -1,0 +1,1 @@
+# aws-s3-lambda-crop-n-resize

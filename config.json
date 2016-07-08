@@ -1,0 +1,10 @@
+{
+	"dstBucket": "dslambdaresize",
+	"thumbs":
+		[
+				{"folder":"square", "type":"thumbnail", "geometry":"500x500"         },
+				{"folder":"large" , "type":"resize",    "width":"900", "height":"900"},
+				{"folder":"medium", "type":"resize",    "width":"600"                },
+				{"folder":"small" , "type":"resize",                   "height":"300"}
+		]
+}

@@ -2,7 +2,7 @@
 
 ### Installation
 ```bash
-$npm install async gm
+$ npm install async gm
 ```
 ### Configure
 
@@ -25,15 +25,18 @@ Sample config.json
 ```
 - `dstBucket`: destination bucket (source bucket is determined by trigger in lambda)
 - `thumbs`: various size and shares
-	- `folder`: must be unique
+	- `folder`: each entry must be unique, or you'll be overwriting the files
 	- `type`: processing mode
-		- `thumbnail`: resize and center-crops and image
+		- `thumbnail`: resize and center-crops the image
 		- `resize`: simple reduce in size preserving aspect ratio of original
-	- `geometry`: required for 'thumbnail'
+	- `geometry`: required for `thumbnail` mode
 	- `height` and `width`: at least one is required for `resize` mode
 
 
 ### Deploy
-- zip content of the folder
-- upload as lambda function
-- maker sure both dstBucket exists
+1. zip content of the folder
+2. upload as lambda function
+3. maker sure both dstBucket exists
+
+### Notes
+* Large files (3+ MB) might cause problems. Try allocating more memory in Lambda.

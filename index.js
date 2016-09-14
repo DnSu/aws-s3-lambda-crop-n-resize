@@ -1,6 +1,7 @@
 // dependencies
+var AWS = require('aws-sdk'); //Provided by lambda (no need to install)
+
 var async = require('async');
-var AWS = require('aws-sdk');
 var gm = require('gm')
             .subClass({ imageMagick: true }); // Enable ImageMagick integration.
 var util = require('util');
@@ -8,20 +9,20 @@ var fs   = require("fs");
 var path = require("path");
 
 
-// get reference to S3 client 
+// get reference to S3 client
 var s3 = new AWS.S3();
- 
+
 exports.handler = function(event, context) {
 
 	// Load config.json
 	var configPath = path.resolve(__dirname, "config.json");
-	var config = JSON.parse(fs.readFileSync(configPath, { encoding: "utf8" }));	
+	var config = JSON.parse(fs.readFileSync(configPath, { encoding: "utf8" }));
 
 
 	// Read options from the event.
 	console.log("Reading options from event:\n", util.inspect(event, {depth: 5}));
 	var srcBucket = event.Records[0].s3.bucket.name;
-	var srcKey    = event.Records[0].s3.object.key;
+	var srcKey    = event.Records[0].s3.object.key.replace(/\+/g, ' ');
 	var dstBucket = config.dstBucket; //from config.json
 	var dstKey    = srcKey;
 
@@ -37,16 +38,16 @@ exports.handler = function(event, context) {
 		console.error('unable to infer image type for key ' + srcKey);
 		return;
 	}
-	var imageType = typeMatch[1];
+	var imageType = typeMatch[1].toLowerCase();
 	if (imageType != "jpg" && imageType != "png") {
 		console.log('skipping non-image ' + srcKey);
 		return;
 	}
 
-	var thumbs = config.thumbs; //from config.json
+	var thumbs = config.thumbs; // From config.json
 
 
-	var thumbs2 = thumbs;
+	var thumbs2 = thumbs; // Take a copy to iterate, but leave original alone
 
 	for (var i=0,  tot=thumbs2.length; i < tot; i++) {
 
@@ -154,4 +155,3 @@ exports.handler = function(event, context) {
 
 
 };
-

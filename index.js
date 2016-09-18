@@ -22,7 +22,7 @@ exports.handler = function(event, context) {
 	// Read options from the event.
 	console.log("Reading options from event:\n", util.inspect(event, {depth: 5}));
 	var srcBucket = event.Records[0].s3.bucket.name;
-	var srcKey    = event.Records[0].s3.object.key.replace(/\+/g, ' ');
+	var srcKey    = decodeURIComponent(event.Records[0].s3.object.key.replace(/\+/g, ' '));
 	var dstBucket = config.dstBucket; //from config.json
 	var dstKey    = srcKey;
 
@@ -32,17 +32,6 @@ exports.handler = function(event, context) {
 		return;
 	}
 
-	// Infer the image type.
-	var typeMatch = srcKey.match(/\.([^.]*)$/);
-	if (!typeMatch) {
-		console.error('unable to infer image type for key ' + srcKey);
-		return;
-	}
-	var imageType = typeMatch[1].toLowerCase();
-	if (imageType != "jpg" && imageType != "png") {
-		console.log('skipping non-image ' + srcKey);
-		return;
-	}
 
 	var thumbs = config.thumbs; // From config.json
 
@@ -65,10 +54,17 @@ exports.handler = function(event, context) {
 					);
 				},
 
-				function transform(response, next) {
+        function getFormat(response, next) {
+          gm(response.Body).format(function (err, format) {
+            // console.log('Format: '+ format);
+            next(null, format, response);
+          });
+        },
 
+				function transform(imageType, response, next) {
+
+          // console.log('imageType: '+ imageType);
 					var current_thumb = thumbs.pop();
-
 
 					if(current_thumb.type=='thumbnail'){
 

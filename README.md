@@ -1,6 +1,8 @@
 ## aws-s3-lambda-crop-n-resize
 Lambda function when triggered by an S3 PUT (configured in lambda triggers in AWS) automatically resizes images to "standar sizes" and place them in destination bucket (dsBucket).
 
+Why? Cause S3 + lambda is cheaper than image processor like imgix. Best for small projects that don't really generate revenue.
+
 ### Dependencies
 ```bash
 $ npm install async gm

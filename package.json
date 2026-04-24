@@ -4,12 +4,15 @@
   "description": "AWS Lambda triggered by S3 PUT to crop/resize images and upload variants.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "packageManager": "yarn@4.14.1",
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "clean": "rm -rf dist *.tsbuildinfo",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "eslint src",
-    "lint:fix": "eslint src --fix"
+    "lint:fix": "eslint src --fix",
+    "dev": "yarn serverless dev",
+    "deploy": "yarn build && npx sls deploy"
   },
   "keywords": [
     "aws",
@@ -31,6 +34,7 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.5",
     "prettier": "^3.8.3",
+    "serverless": "^4.34.0",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.59.0"
   }

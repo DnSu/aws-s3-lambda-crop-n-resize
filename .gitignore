@@ -7,3 +7,7 @@
 /dist
 /*.tsbuildinfo
 .claude
+serverless.yml
+.serverless
+.yarn
+.yarnrc.yml

@@ -11,6 +11,7 @@ export interface ThumbConfig {
 }
 
 export interface AppConfig {
+  region: string;
   dstBucket: string;
   thumbs: ThumbConfig[];
 }

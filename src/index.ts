@@ -5,7 +5,7 @@ import config from './config';
 import { detectSupportedInputFormat } from './lib/detectFormat';
 import { processThumb } from './lib/processThumb';
 
-const s3 = new AWS.S3();
+const s3 = new AWS.S3({ region: config.region });
 
 function getObject(bucket: string, key: string): Promise<AWS.S3.GetObjectOutput> {
   return s3.getObject({ Bucket: bucket, Key: key }).promise();

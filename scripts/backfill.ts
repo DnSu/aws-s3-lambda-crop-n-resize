@@ -17,13 +17,13 @@ import AWS from 'aws-sdk';
 import config from '../src/config';
 import { detectSupportedInputFormat } from '../src/lib/detectFormat';
 import { processThumb, buildOutputTargets } from '../src/lib/processThumb';
-import type { ThumbConfig } from '../src/config';
+import type { ThumbConfig } from '../src/config.interface';
 import { getBackfillArgs } from './lib/args';
 import { withConcurrency } from './lib/concurrency';
 import { listObjects, objectExists } from './lib/s3';
 import { resolveThumbsToProcess } from './lib/thumbs';
 
-const s3 = new AWS.S3();
+const s3 = new AWS.S3({ region: config.region });
 
 // --- CLI args -----------------------------------------------------------------
 

@@ -1,5 +1,5 @@
 import config from '../../src/config';
-import type { ThumbConfig } from '../../src/config';
+import type { ThumbConfig } from '../../src/config.interface';
 
 export function resolveThumbsToProcess(foldersArg?: string): ThumbConfig[] {
   if (!foldersArg) {

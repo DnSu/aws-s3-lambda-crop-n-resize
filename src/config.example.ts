@@ -1,6 +1,7 @@
 import { AppConfig } from './config.interface';
 
 const config: AppConfig = {
+  region: 'us-east-1',
   dstBucket: 'dslambdaresize',
   thumbs: [
     // Square crop centered on the image using an exact target geometry.

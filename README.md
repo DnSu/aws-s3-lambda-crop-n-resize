@@ -24,6 +24,33 @@ Compiled output is emitted to `dist/`.
 
 Use `scripts/backfill.ts` to regenerate variants for objects already in your source bucket.
 
+Before running backfill, make sure your AWS credentials are available in your shell.
+
+Option 1: use an AWS profile (recommended)
+
+```bash
+$ aws configure --profile myprofile
+$ AWS_PROFILE=myprofile npx ts-node scripts/backfill.ts --src-bucket <source-bucket> --dry-run
+```
+
+Option 2: export credentials directly in the terminal session
+
+```bash
+$ export AWS_ACCESS_KEY_ID=<your-access-key-id>
+$ export AWS_SECRET_ACCESS_KEY=<your-secret-access-key>
+$ export AWS_SESSION_TOKEN=<your-session-token>   # only if using temporary credentials
+$ export AWS_REGION=<aws-region>
+$ npx ts-node scripts/backfill.ts --src-bucket <source-bucket> --dry-run
+```
+
+Verify which identity is active:
+
+```bash
+$ aws sts get-caller-identity
+```
+
+Credential resolution order for this script follows the AWS SDK default chain: environment variables first, then shared AWS config/credentials profiles, then instance/task role credentials when running on AWS infrastructure.
+
 1. Install runtime tooling for direct TypeScript execution:
 
 ```bash
@@ -57,7 +84,13 @@ $ npx ts-node scripts/backfill.ts --src-bucket <source-bucket> --concurrency 10
 
 ### Configure
 
-Edit `src/config.ts` and set your destination bucket and generated sizes.
+1. Copy the example config:
+
+```bash
+$ cp src/config.example.ts src/config.ts
+```
+
+2. Edit `src/config.ts` and set your destination bucket and generated sizes.
 
 Sample config.ts
 
@@ -97,6 +130,41 @@ const config = {
      - Memory: 1024MB
      - Timeout: 3 min
 4. make sure dstBucket exists
+
+#### Deploy with Serverless Framework
+
+1. Create your Serverless config from the example:
+
+```bash
+$ cp serverless.yml.example serverless.yml
+```
+
+2. Edit `serverless.yml` and replace placeholders:
+   - `your-source-bucket-name`
+   - `your-destination-bucket-name`
+   - optionally adjust `provider.region`, memory, timeout, and S3 `prefix`
+
+3. Build TypeScript output so `dist/index.handler` exists:
+
+```bash
+$ npm run build
+```
+
+4. Deploy with Serverless (using your active AWS credentials/profile):
+
+```bash
+$ npx serverless deploy
+```
+
+Useful commands:
+
+```bash
+# Deploy to a specific stage
+$ npx serverless deploy --stage prod
+
+# Remove deployed stack
+$ npx serverless remove --stage prod
+```
 
 ### Permissions
 

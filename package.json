@@ -1,0 +1,37 @@
+{
+  "name": "aws-s3-lambda-crop-n-resize",
+  "version": "1.0.0",
+  "description": "AWS Lambda triggered by S3 PUT to crop/resize images and upload variants.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "clean": "rm -rf dist *.tsbuildinfo",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix"
+  },
+  "keywords": [
+    "aws",
+    "lambda",
+    "s3",
+    "resize",
+    "imagemagick"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "aws-sdk": "^2.1692.0",
+    "gm": "^1.25.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/aws-lambda": "^8.10.146",
+    "@types/gm": "^1.25.4",
+    "eslint": "^10.2.1",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.5",
+    "prettier": "^3.8.3",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.59.0"
+  }
+}

@@ -1,0 +1,22 @@
+service: aws-s3-lambda-crop-n-resize
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  region: us-east-1
+
+functions:
+  resize:
+    handler: dist/index.handler
+    timeout: 180
+    memorySize: 1024
+    events:
+      - s3:
+          bucket: your-source-bucket-name
+          event: s3:ObjectCreated:Put
+          existing: true
+          rules:
+            - prefix: uploads/
+            - suffix: .jpg

@@ -5,26 +5,38 @@ Why? Cause S3 + lambda is cheaper than image processor like imgix. Best for smal
 
 ### Dependencies
 ```bash
-$ npm install async gm
+$ npm install
 ```
+
+This package is now written in TypeScript.
+
+### Build
+```bash
+$ npm run build
+```
+
+Compiled output is emitted to `dist/`.
+
 ### Configure
 
-```bash
-$ cp config.json.sample config.json
-```
+Edit `src/config.ts` and set your destination bucket and generated sizes.
 
-Sample config.json
+Sample config.ts
 
-```json
-{
-	"dstBucket": "dslambdaresize",
-	"thumbs":[
-		{"folder":"square", "type":"thumbnail", "geometry":"500x500"         },
-		{"folder":"large" , "type":"resize",    "width":"900", "height":"900"},
-		{"folder":"medium", "type":"resize",    "width":"600"                },
-		{"folder":"small" , "type":"resize",                   "height":"300"}
+```ts
+const config = {
+	dstBucket: 'dslambdaresize',
+	thumbs: [
+		// Square crop centered on image subject.
+		{ folder: 'square', type: 'thumbnail', geometry: '500x500' },
+		// Large resize bounded by width and height.
+		{ folder: 'large', type: 'resize', width: '900', height: '900' },
+		// Medium resize bounded by width only.
+		{ folder: 'medium', type: 'resize', width: '600' },
+		// Small resize bounded by height only.
+		{ folder: 'small', type: 'resize', height: '300' }
 	]
-}
+};
 ```
 - `dstBucket`: destination bucket (source bucket is determined by trigger in lambda)
 - `thumbs`: various size and shares
@@ -37,14 +49,69 @@ Sample config.json
 
 
 ### Deploy
-1. zip content of the folder
-2. upload as lambda function
+1. build the project with `npm run build`
+2. zip content of the folder (including `dist/`)
+3. upload as lambda function
 	* Lambda Config
-		* Runtime: Node.js 4.3
-		* Handler: index.handler
+		* Runtime: modern Node.js runtime (for example Node.js 20.x)
+		* Handler: dist/index.handler
 		* Memory: 1024MB
 		* Timeout: 3 min
-3. maker sure dstBucket exists
+4. make sure dstBucket exists
+
+### Permissions
+
+Your Lambda execution role needs read access to the source bucket and write access to the destination bucket.
+
+Example IAM policy for the Lambda role:
+
+```json
+{
+	"Version": "2012-10-17",
+	"Statement": [
+		{
+			"Sid": "ReadSourceObject",
+			"Effect": "Allow",
+			"Action": ["s3:GetObject"],
+			"Resource": "arn:aws:s3:::<SOURCE_BUCKET>/*"
+		},
+		{
+			"Sid": "WriteDestinationObject",
+			"Effect": "Allow",
+			"Action": ["s3:PutObject"],
+			"Resource": "arn:aws:s3:::<DEST_BUCKET>/*"
+		}
+	]
+}
+```
+
+If you configure S3 PUT triggers through Serverless on an existing bucket, the deployment identity also needs permission to manage bucket notifications and Lambda invoke permissions.
+
+Typical deployment permissions:
+
+```json
+{
+	"Version": "2012-10-17",
+	"Statement": [
+		{
+			"Effect": "Allow",
+			"Action": [
+				"s3:GetBucketNotification",
+				"s3:PutBucketNotification"
+			],
+			"Resource": "arn:aws:s3:::<SOURCE_BUCKET>"
+		},
+		{
+			"Effect": "Allow",
+			"Action": [
+				"lambda:AddPermission",
+				"lambda:RemovePermission"
+			],
+			"Resource": "arn:aws:lambda:<REGION>:<ACCOUNT_ID>:function:<FUNCTION_NAME>"
+		}
+	]
+}
+```
 
 ### Notes
 * Large files (3+ MB) might cause problems. Try allocating more memory in Lambda.

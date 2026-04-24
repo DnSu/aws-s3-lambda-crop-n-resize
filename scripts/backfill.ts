@@ -16,7 +16,7 @@
 import AWS from 'aws-sdk';
 import config from '../src/config';
 import { detectFormat } from '../src/lib/detectFormat';
-import { processThumb } from '../src/lib/processThumb';
+import { processThumb, buildOutputTargets } from '../src/lib/processThumb';
 import type { ThumbConfig } from '../src/config';
 import { getBackfillArgs } from './lib/args';
 import { withConcurrency } from './lib/concurrency';
@@ -75,14 +75,24 @@ async function main(): Promise<void> {
     console.log(`[${n}/${keys.length}] ${key}`);
     try {
       const thumbChecks = await Promise.all(
-        thumbsToProcess.map(async (thumb) => ({
-          thumb,
-          targetKey: `${thumb.folder}/${key}`,
-          exists: await objectExists(s3, dstBucket, `${thumb.folder}/${key}`),
-        }))
+        thumbsToProcess.map(async (thumb) => {
+          const targets = buildOutputTargets(key, thumb);
+          const targetChecks = await Promise.all(
+            targets.map(async (target) => ({
+              targetKey: target.targetKey,
+              exists: await objectExists(s3, dstBucket, target.targetKey),
+            }))
+          );
+
+          return {
+            thumb,
+            targetChecks,
+            allExist: targetChecks.every((item) => item.exists),
+          };
+        })
       );
 
-      const missingThumbs = thumbChecks.filter((item) => !item.exists);
+      const missingThumbs = thumbChecks.filter((item) => !item.allExist);
 
       if (missingThumbs.length === 0) {
         console.log('  skipped — all destination variants already exist');
@@ -113,8 +123,10 @@ async function main(): Promise<void> {
         )
       );
 
-      for (const existing of thumbChecks.filter((item) => item.exists)) {
-        console.log(`    skipped existing → ${dstBucket}/${existing.targetKey}`);
+      for (const existing of thumbChecks.filter((item) => item.allExist)) {
+        for (const target of existing.targetChecks) {
+          console.log(`    skipped existing → ${dstBucket}/${target.targetKey}`);
+        }
       }
     } catch (err) {
       failed++;

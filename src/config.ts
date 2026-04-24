@@ -6,6 +6,8 @@ export interface ThumbConfig {
   geometry?: string;
   width?: string | number;
   height?: string | number;
+  webp?: boolean;
+  avif?: boolean;
 }
 
 export interface AppConfig {

@@ -15,7 +15,7 @@
 
 import AWS from 'aws-sdk';
 import config from '../src/config';
-import { detectFormat } from '../src/lib/detectFormat';
+import { detectSupportedInputFormat } from '../src/lib/detectFormat';
 import { processThumb, buildOutputTargets } from '../src/lib/processThumb';
 import type { ThumbConfig } from '../src/config';
 import { getBackfillArgs } from './lib/args';
@@ -38,6 +38,8 @@ if (!srcBucket) {
   process.exit(1);
 }
 
+const sourceBucket = srcBucket;
+
 const thumbsToProcess: ThumbConfig[] = (() => {
   try {
     return resolveThumbsToProcess(foldersArg);
@@ -52,7 +54,7 @@ const dstBucket = config.dstBucket;
 // --- Main --------------------------------------------------------------------
 
 async function main(): Promise<void> {
-  console.log(`Source bucket : ${srcBucket}`);
+  console.log(`Source bucket : ${sourceBucket}`);
   console.log(`Dest bucket   : ${dstBucket}`);
   console.log(`Folders       : ${thumbsToProcess.map((t) => t.folder).join(', ')}`);
   console.log(`Prefix filter : ${prefix || '(none)'}`);
@@ -61,11 +63,11 @@ async function main(): Promise<void> {
   console.log('');
 
   const keys: string[] = [];
-  for await (const key of listObjects(s3, srcBucket, prefix)) {
+  for await (const key of listObjects(s3, sourceBucket, prefix)) {
     keys.push(key);
   }
 
-  console.log(`Found ${keys.length} object(s) in s3://${srcBucket}/${prefix || '*'}\n`);
+  console.log(`Found ${keys.length} object(s) in s3://${sourceBucket}/${prefix || '*'}\n`);
 
   let done = 0;
   let failed = 0;
@@ -99,7 +101,7 @@ async function main(): Promise<void> {
         return;
       }
 
-      const response = await s3.getObject({ Bucket: srcBucket, Key: key }).promise();
+      const response = await s3.getObject({ Bucket: sourceBucket, Key: key }).promise();
 
       if (!response.Body) {
         console.warn('  skipped — no body');
@@ -107,8 +109,12 @@ async function main(): Promise<void> {
       }
 
       const sourceBody = Buffer.isBuffer(response.Body) ? response.Body : Buffer.from(response.Body as Uint8Array);
-
-      const imageType = await detectFormat(sourceBody);
+      const supportedFormat = await detectSupportedInputFormat(sourceBody);
+      if (!supportedFormat.format) {
+        console.warn(`  skipped — ${supportedFormat.reason}`);
+        return;
+      }
+      const imageType = supportedFormat.format;
 
       await Promise.all(
         missingThumbs.map(({ thumb }) =>

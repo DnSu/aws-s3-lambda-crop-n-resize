@@ -16,17 +16,17 @@
     "lambda",
     "s3",
     "resize",
-    "imagemagick"
+    "sharp"
   ],
   "license": "MIT",
   "dependencies": {
     "aws-sdk": "^2.1692.0",
-    "gm": "^1.25.1"
+    "sharp": "^0.33.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/aws-lambda": "^8.10.146",
-    "@types/gm": "^1.25.4",
+    "@types/node": "^25.6.0",
     "eslint": "^10.2.1",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.5",

@@ -1,10 +1,12 @@
-import gm from 'gm';
-
-const imageMagick = gm.subClass({ imageMagick: true });
+import sharp from 'sharp';
 
 interface ImageSize {
   width: number;
   height: number;
+}
+
+function normalizeFormatForSharp(format: string): string {
+  return format.toLowerCase() === 'jpg' ? 'jpeg' : format.toLowerCase();
 }
 
 export function toOptionalNumber(value?: string | number): number | undefined {
@@ -13,17 +15,12 @@ export function toOptionalNumber(value?: string | number): number | undefined {
   return Number.isFinite(parsed) ? parsed : undefined;
 }
 
-function getImageSize(body: Buffer): Promise<ImageSize> {
-  return new Promise((resolve, reject) => {
-    imageMagick(body).size((err, size) => {
-      if (err || !size || !size.width || !size.height) {
-        reject(err ?? new Error('Unable to determine image size'));
-        return;
-      }
-
-      resolve({ width: size.width, height: size.height });
-    });
-  });
+async function getImageSize(body: Buffer): Promise<ImageSize> {
+  const metadata = await sharp(body).metadata();
+  if (!metadata.width || !metadata.height) {
+    throw new Error('Unable to determine image size');
+  }
+  return { width: metadata.width, height: metadata.height };
 }
 
 function parseGeometry(geometry: string): ImageSize {
@@ -56,60 +53,56 @@ export async function toBufferThumbnail(body: Buffer, imageType: string, geometr
   const target = parseGeometry(geometry);
   const sourceSize = await getImageSize(body);
   const crop = computeCropBox(sourceSize, target);
+  const outputFormat = normalizeFormatForSharp(imageType);
 
-  return new Promise((resolve, reject) => {
-    imageMagick(body)
-      .autoOrient()
-      .noProfile()
-      .command('convert')
-      .out('-quality', '95')
-      .out('-gravity', 'center')
-      .out('-crop', `${crop.width}x${crop.height}+0+0`)
-      .out('+repage')
-      .out('-resize', `${target.width}x${target.height}>`)
-      .toBuffer(imageType, (err, buffer) => {
-        if (err || !buffer) {
-          reject(err ?? new Error('Unable to generate thumbnail'));
-          return;
-        }
-        resolve(buffer);
-      });
-  });
+  return sharp(body)
+    .rotate()
+    .extract({
+      left: Math.max(0, Math.round((sourceSize.width - crop.width) / 2)),
+      top: Math.max(0, Math.round((sourceSize.height - crop.height) / 2)),
+      width: crop.width,
+      height: crop.height,
+    })
+    .resize(target.width, target.height, {
+      fit: 'cover',
+      withoutEnlargement: true,
+    })
+    .toFormat(outputFormat as keyof sharp.FormatEnum, { quality: 95 })
+    .toBuffer();
 }
 
-export function toBufferResize(
+export async function toBufferResize(
   body: Buffer,
   imageType: string,
   width: number | null,
   height: number | null
 ): Promise<Buffer> {
-  return new Promise((resolve, reject) => {
-    const resizeGeometry = `${width ?? ''}x${height ?? ''}>`;
-    imageMagick(body)
-      .autoOrient()
-      .noProfile()
-      .command('convert')
-      .out('-resize', resizeGeometry)
-      .toBuffer(imageType, (err, buffer) => {
-        if (err || !buffer) {
-          reject(err ?? new Error('Unable to resize image'));
-          return;
-        }
-        resolve(buffer);
-      });
-  });
+  const outputFormat = normalizeFormatForSharp(imageType);
+
+  return sharp(body)
+    .rotate()
+    .resize(width, height, {
+      fit: 'inside',
+      withoutEnlargement: true,
+    })
+    .toFormat(outputFormat as keyof sharp.FormatEnum, { quality: 95 })
+    .toBuffer();
 }
 
-export function convertBufferFormat(body: Buffer, outputFormat: string): Promise<Buffer> {
-  return new Promise((resolve, reject) => {
-    imageMagick(body)
-      .command('convert')
-      .toBuffer(outputFormat, (err, buffer) => {
-        if (err || !buffer) {
-          reject(err ?? new Error(`Unable to convert image to ${outputFormat}`));
-          return;
-        }
-        resolve(buffer);
-      });
-  });
+export async function convertBufferFormat(body: Buffer, outputFormat: string): Promise<Buffer> {
+  const pipeline = sharp(body);
+
+  switch (outputFormat.toLowerCase()) {
+    case 'webp':
+      return pipeline.webp({ quality: 95 }).toBuffer();
+    case 'avif':
+      return pipeline.avif({ quality: 95 }).toBuffer();
+    case 'jpeg':
+    case 'jpg':
+      return pipeline.jpeg({ quality: 95 }).toBuffer();
+    case 'png':
+      return pipeline.png().toBuffer();
+    default:
+      throw new Error(`Unsupported output format: ${outputFormat}`);
+  }
 }

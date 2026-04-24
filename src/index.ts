@@ -2,7 +2,7 @@ import AWS from 'aws-sdk';
 import util from 'util';
 import type { Context, S3Event } from 'aws-lambda';
 import config from './config';
-import { detectFormat } from './lib/detectFormat';
+import { detectSupportedInputFormat } from './lib/detectFormat';
 import { processThumb } from './lib/processThumb';
 
 const s3 = new AWS.S3();
@@ -47,7 +47,12 @@ export const handler = async (event: S3Event, _context: Context): Promise<void> 
   }
 
   const sourceBody = Buffer.isBuffer(response.Body) ? response.Body : Buffer.from(response.Body as Uint8Array);
-  const imageType = await detectFormat(sourceBody);
+  const supportedFormat = await detectSupportedInputFormat(sourceBody);
+  if (!supportedFormat.format) {
+    console.warn(`Skipping ${srcBucket}/${srcKey}: ${supportedFormat.reason}.`);
+    return;
+  }
+  const imageType = supportedFormat.format;
 
   await Promise.all(
     config.thumbs.map((thumb) =>

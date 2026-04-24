@@ -1,4 +1,4 @@
-import type { ThumbConfig } from '../config';
+import type { ThumbConfig } from '../config.interface';
 import { toOptionalNumber, toBufferThumbnail, toBufferResize, convertBufferFormat } from './imageProcessing';
 
 export type UploadFn = (targetKey: string, buffer: Buffer, contentType: string | undefined) => Promise<void>;

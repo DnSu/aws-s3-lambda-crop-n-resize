@@ -3,6 +3,7 @@
 /node_modules
 /aws-s3-lambda-crop-n-resize.zip
 /config.json
+/src/config.ts
 /dist
 /*.tsbuildinfo
 .claude

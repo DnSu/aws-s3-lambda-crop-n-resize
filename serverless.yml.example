@@ -6,6 +6,23 @@ provider:
   name: aws
   runtime: nodejs20.x
   region: us-east-1
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - s3:GetObject
+            - s3:ListBucket
+          Resource:
+            - arn:aws:s3:::your-source-bucket-name
+            - arn:aws:s3:::your-source-bucket-name/*
+        - Effect: Allow
+          Action:
+            - s3:PutObject
+            - s3:ListBucket
+          Resource:
+            - arn:aws:s3:::your-destination-bucket-name
+            - arn:aws:s3:::your-destination-bucket-name/*
 
 functions:
   resize:
@@ -19,4 +36,3 @@ functions:
           existing: true
           rules:
             - prefix: uploads/
-            - suffix: .jpg

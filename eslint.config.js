@@ -16,6 +16,11 @@ module.exports = tseslint.config(
       'prettier/prettier': 'error',
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
     },
+  },
+  {
+    // Type-aware linting is scoped to src/ since tsconfig.json rootDir is src/.
+    // scripts/ is linted without project-based type checking.
+    files: ['src/**/*.ts'],
     languageOptions: {
       parserOptions: {
         project: true,
